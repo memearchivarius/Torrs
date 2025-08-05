@@ -13,13 +13,20 @@ COPY . .
 # Отладка: Проверяем содержимое рабочей директории
 RUN ls -la
 
-# Явно устанавливаем права на выполнение для build.sh
+# Явно чиним окончания строк и пересоздаем скрипт
 RUN if [ -f "build.sh" ]; then \
+        # Удаляем Windows окончания строк и создаем чистый скрипт \
+        rm -f build.sh.fixed && \
+        tr -d '\r' < build.sh > build.sh.fixed && \
+        mv build.sh.fixed build.sh && \
         chmod +x build.sh && \
-        echo "Права на build.sh установлены"; \
+        echo "build.sh почищен и готов к запуску"; \
     else \
         echo "build.sh НЕ НАЙДЕН!" && exit 1; \
     fi
+
+# Отладка: выводим содержимое скрипта
+RUN cat build.sh
 
 # Сборка через скрипт
 RUN ./build.sh
