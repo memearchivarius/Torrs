@@ -10,21 +10,16 @@ WORKDIR /app
 # Копирование всех исходных файлов
 COPY . .
 
-# Отладка - посмотрим, что у нас в корне
+# Отладка: Проверяем содержимое рабочей директории
 RUN ls -la
 
-# Отладка - проверим наличие build.sh
-RUN echo "Проверяем наличие build.sh:" && \
-    if [ -f "build.sh" ]; then \
-        echo "build.sh найден"; \
-        ls -l build.sh; \
+# Явно устанавливаем права на выполнение для build.sh
+RUN if [ -f "build.sh" ]; then \
+        chmod +x build.sh && \
+        echo "Права на build.sh установлены"; \
     else \
-        echo "build.sh НЕ НАЙДЕН!"; \
-        find . -name "build.sh" -type f; \
+        echo "build.sh НЕ НАЙДЕН!" && exit 1; \
     fi
-
-# Сделаем скрипт исполняемым, если он существует
-RUN if [ -f "build.sh" ]; then chmod +x build.sh; else echo "build.sh не существует!"; exit 1; fi
 
 # Сборка через скрипт
 RUN ./build.sh
