@@ -1,4 +1,5 @@
-FROM golang:1.21-alpine AS builder
+# Используем актуальную версию Go, как указано в go.mod
+FROM golang:1.22-alpine AS builder
 
 # Установка зависимостей
 RUN apk add --no-cache git build-base
