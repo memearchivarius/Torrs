@@ -10,7 +10,23 @@ WORKDIR /app
 # Копирование всех исходных файлов
 COPY . .
 
-# Сборка через скрипт (скрипт уже должен быть исполняемым в репо)
+# Отладка - посмотрим, что у нас в корне
+RUN ls -la
+
+# Отладка - проверим наличие build.sh
+RUN echo "Проверяем наличие build.sh:" && \
+    if [ -f "build.sh" ]; then \
+        echo "build.sh найден"; \
+        ls -l build.sh; \
+    else \
+        echo "build.sh НЕ НАЙДЕН!"; \
+        find . -name "build.sh" -type f; \
+    fi
+
+# Сделаем скрипт исполняемым, если он существует
+RUN if [ -f "build.sh" ]; then chmod +x build.sh; else echo "build.sh не существует!"; exit 1; fi
+
+# Сборка через скрипт
 RUN ./build.sh
 
 # Финальный минимальный образ
