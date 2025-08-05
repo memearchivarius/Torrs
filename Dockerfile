@@ -7,15 +7,10 @@ RUN apk add --no-cache git build-base
 # Рабочая директория
 WORKDIR /app
 
-# Копирование go.mod и go.sum для кэширования зависимостей
-COPY go.mod go.sum ./
-RUN go mod download
-
-# Копирование исходного кода
+# Копирование всех исходных файлов
 COPY . .
 
-# Сборка
-RUN chmod +x build.sh
+# Сборка через скрипт (скрипт уже должен быть исполняемым в репо)
 RUN ./build.sh
 
 # Финальный минимальный образ
