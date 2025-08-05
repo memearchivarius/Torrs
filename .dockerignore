@@ -1,6 +1,5 @@
 .git
 .gitignore
 README.md
-*.sh
 dist/
 .gitmodules
