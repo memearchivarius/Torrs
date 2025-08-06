@@ -37,6 +37,8 @@ RUN cat build.sh
 # Сборка через скрипт
 RUN ./build.sh
 
+# ... (первая часть Dockerfile остается без изменений)
+
 # Финальный минимальный образ (тоже на Bookworm)
 FROM debian:bookworm-slim
 
@@ -49,23 +51,37 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Создание пользователя
 RUN useradd -m -s /bin/bash torrs
 
-# Копирование собранного бинарника и веб-файлов
-COPY --from=builder /app/dist/torrs /usr/local/bin/torrs
-COPY --from=builder /app/views /views
+# --- ИЗМЕНЕНИЯ НАЧИНАЮТСЯ ЗДЕСЬ ---
 
-# Создание рабочей директории для данных
-WORKDIR /data
+# Копирование собранного бинарника В КОРНЕВУЮ ДИРЕКТОРИЮ ПОЛЬЗОВАТЕЛЯ или в /app
+# ВАЖНО: Это место будет использоваться как global.PWD для torrs
+WORKDIR /home/torrs
+# Копируем бинарник сюда
+COPY --from=builder --chown=torrs:torrs /app/dist/torrs ./torrs
+# Копируем views тоже сюда или в корень, как в исходном build.sh
+COPY --from=builder --chown=torrs:torrs /app/views ./views
+
+# Создание директории для данных (тома) и установка прав
+# Эта директория будет монтироваться извне через volume
 RUN mkdir -p /data && chown torrs:torrs /data
+
+# Устанавливаем рабочую директорию ТАМ, ГДЕ НАХОДИТСЯ БИНАРНИК
+# Это критично, потому что torrs ищет/создает torrents.db и index.db здесь.
+WORKDIR /home/torrs
 
 # Переключение на непривилегированного пользователя
 USER torrs
 
 # Порты
-EXPOSE 8080
+EXPOSE 8094 # torrs по умолчанию слушает 8094. Можно изменить в CMD.
 
-# Тома
-VOLUME ["/data"]
+# Тома - указываем, что /data может быть примонтирован
+VOLUME ["/data"] # Это позволяет сохранять данные вне контейнера
 
-# Команда запуска
-ENTRYPOINT ["torrs"]
-CMD ["--port", "8080", "--data", "/data"]
+# Команда запуска - НЕТ --data
+# Если нужен другой порт, измените 8094 на нужный, например 8080
+ENTRYPOINT ["./torrs"]
+# CMD ["--port", "8080"] # Раскомментируйте, если хотите порт 8080 вместо 8094
+CMD ["--port", "8094"] # По умолчанию torrs слушает 8094
+
+# --- ИЗМЕНЕНИЯ ЗАКАНЧИВАЮТСЯ ЗДЕСЬ ---
