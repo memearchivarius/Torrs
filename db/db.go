@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"time"
-	"torrsru/global"
+	"os"
 	"torrsru/models/fdb"
 )
 

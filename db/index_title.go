@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"torrsru/global"
 	"torrsru/models/fdb"
 )
 
@@ -34,9 +33,13 @@ func initIndex() error {
 func RebuildIndex() error {
 	var err error
 	indexTorrentTitle.Close()
-	os.RemoveAll(filepath.Join(global.PWD, "index.db"))
+	dataDir := "/data"
+	if dir := os.Getenv("TORRS_DATA_DIR"); dir != "" {
+    	dataDir = dir
+	}
+	os.RemoveAll(filepath.Join(dataDir, "index.db"))
 	mappings := bleve.NewIndexMapping()
-	indexTorrentTitle, err = bleve.NewUsing(filepath.Join(global.PWD, "index.db"), mappings, "scorch", "scorch", nil)
+	indexTorrentTitle, err = bleve.NewUsing(filepath.Join(dataDir, "index.db"), mappings, "scorch", "scorch", nil)
 	if err != nil {
 		return err
 	}
