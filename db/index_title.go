@@ -19,9 +19,14 @@ var (
 func initIndex() error {
 	mappings := bleve.NewIndexMapping()
 	var err error
-	indexTorrentTitle, err = bleve.Open(filepath.Join(global.PWD, "index.db"))
+	dataDir := "/data"
+	if dir := os.Getenv("TORRS_DATA_DIR"); dir != "" {
+    	dataDir = dir
+	}
+	indexTorrentTitle, err = bleve.Open(filepath.Join(dataDir, "index.db"))
 	if err != nil {
-		indexTorrentTitle, err = bleve.NewUsing(filepath.Join(global.PWD, "index.db"), mappings, "scorch", "scorch", nil)
+		// ИСПРАВЛЕНО: Используем dataDir, а не global.PWD
+		indexTorrentTitle, err = bleve.NewUsing(filepath.Join(dataDir, "index.db"), mappings, "scorch", "scorch", nil)
 	}
 	return err
 }

@@ -18,7 +18,12 @@ var (
 )
 
 func Init() {
-	d, err := bolt.Open(filepath.Join(global.PWD, "torrents.db"), 0o666, &bolt.Options{Timeout: 5 * time.Second})
+	dataDir := "/data"
+	if dir := os.Getenv("TORRS_DATA_DIR"); dir != "" {
+    	dataDir = dir
+	}
+	// ИСПРАВЛЕНО: Используем dataDir, а не global.PWD
+	d, err := bolt.Open(filepath.Join(dataDir, "torrents.db"), 0o666, &bolt.Options{Timeout: 5 * time.Second})
 	if err != nil {
 		log.Fatalln("Error open db", err)
 		return
