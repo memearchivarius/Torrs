@@ -9,7 +9,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # Используем только имя репозитория, а не полный путь, для IMAGE_NAME
+  # Это делает конфигурацию чуть более гибкой, если репо переименуется.
+  # IMAGE_NAME вычисляется ниже.
 
 jobs:
   build-and-push-image:
@@ -35,25 +37,46 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Определяем IMAGE_NAME после checkout, используя переменные GitHub
+      - name: Extract repository name
+        id: repo_name
+        run: |
+          # Получаем полное имя репозитория owner/repo и преобразуем в нижний регистр
+          echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          
+      # Извлекаем метаданные (теги, лейблы)
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
+          # images теперь ссылается на вычисленное IMAGE_NAME
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Явно указываем, какие теги создавать
           tags: |
+            # Теги для веток
             type=ref,event=branch
+            # Теги для PR
             type=ref,event=pr
+            # Теги для семвер релизов (если используются)
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            # Тег по хэшу коммита
             type=sha
+            # ЯВНО добавляем тег latest для веток main/master при push
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64 # Убедитесь, что ваш образ собирается под эти платформы
+          push: ${{ github.event_name != 'pull_request' }} # Пушим только не из PR
+          # Используем теги и лейблы, сгенерированные на предыдущем шаге
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # build-args, если необходимы
+          # build-args: |
+          #   ARG_NAME=value
